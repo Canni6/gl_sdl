@@ -1,12 +1,32 @@
 // python -m glad --out-path=build --api="gl=2.1" --extensions="" --generator="c"
 // g++ example/c++/sdl.cpp build/src/glad.c -Ibuild/include -lSDL2 -ldl
 
+// OpenGL reference: https://learnopengl.com/book/book_pdf.pdf
+
 #include <iostream>
 
 #include <glad/glad.h>
 // https://stackoverflow.com/questions/48723523/lnk2019-unresolved-external-symbol-c-sdl2-library
 #define SDL_MAIN_HANDLED 
 #include <SDL2/SDL.h>
+
+// Compile a vertex shader
+const char* vertexShaderSource = "#version 330 core\n"
+"layout (location = 0) in vec3 aPos;\n"
+"void main()\n"
+"{\n"
+" gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"}\0";
+
+// Compile a fragment shader
+const char* fragmentShaderSource = "#version 330 core\n"
+"out vec4 FragColor;\n"
+"void main()\n"
+"{\n"
+" FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"}\0";
+
+
 
 int main(int argc, char** argv) {
 
@@ -51,9 +71,72 @@ int main(int argc, char** argv) {
     // Loop condition
     bool running = true;
 
-    float frameNum = 0;
-    float runTime = 0;
-    float runSecond = 0;
+    // Triangle vertices (-1 to 1)
+    float vertices[] = { 
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.0f, 0.5f, 0.0f
+    };
+
+    // create vertex shader object
+    unsigned int vertexShader;
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    // attach vertex shader source code to shader object and compile shader
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+    // handle errors
+    int success;
+    char infoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" <<
+            infoLog << std::endl;
+    }
+    // fragment shader, similar to above
+    unsigned int fragmentShader;
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
+
+    // Shader program - final linked version of multiple shaders combined
+    unsigned int shaderProgram;
+    shaderProgram = glCreateProgram();
+    // attach previously compiled shaders then link
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    // handle errors
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+    }
+    // activate combined shader program - each shader and rendering call will now use this
+    glUseProgram(shaderProgram);
+    // can delete shader objects after they've been linked
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    // First vertex buffer object
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+
+    // Buffer calls will configure the currently bound buffer - VBO in this case
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    // Copy vertex data into buffer memory
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // Instruct OpenGL how to interpret vertex data
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+        (void*)0);
+    glEnableVertexAttribArray(0);
+
+
+    int testNum = 4;
+    int& testRef = testNum;
 
     while (running) {
         SDL_PollEvent(&event);
@@ -72,16 +155,9 @@ int main(int argc, char** argv) {
         }
 
         glClearColor(0, 0, 0, 1);
-        /*std::cout << "Current call num: " << callNum << std::endl;*/
-        
-        
-        // You'd want to use modern OpenGL here
-        /*glColor3d(0, 1, 0);
-        glBegin(GL_TRIANGLES);
-        glVertex2f(.2, 0);
-        glVertex2f(.01, .2);
-        glVertex2f(-.2, 0);
-        glEnd();*/
+        //std::cout << "testNum: " << testNum << std::endl;
+        //std::cout << "testRef: " << testRef << std::endl;
+
 
         SDL_GL_SwapWindow(window);
     }
