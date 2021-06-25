@@ -4,7 +4,8 @@
 // OpenGL reference: https://learnopengl.com/book/book_pdf.pdf
 
 #include <iostream>
-
+// Follow this to install glad and sdl2: https://vcpkg.io/en/getting-started.html?platform=windows
+// make sure to edit solution to link the installed files e.g. "C:\vcpkg\installed\x64-windows\include"
 #include <glad/glad.h>
 // https://stackoverflow.com/questions/48723523/lnk2019-unresolved-external-symbol-c-sdl2-library
 #define SDL_MAIN_HANDLED 
