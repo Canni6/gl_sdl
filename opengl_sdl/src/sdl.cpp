@@ -72,11 +72,37 @@ int main(int argc, char** argv) {
     // Loop condition
     bool running = true;
 
-    // Triangle vertices (-1 to 1)
-    float vertices[] = { 
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f, 0.5f, 0.0f
+    //// Triangle vertices (-1 to 1)
+    //float vertices[] = { 
+    //    -0.5f, -0.5f, 0.0f,
+    //     0.5f, -0.5f, 0.0f,
+    //     0.0f, 0.5f, 0.0f
+    //};
+
+    // tri + tri = rect
+    //float vertices[] = {
+    //    // first triangle
+    //    0.5f, 0.5f, 0.0f, // top right
+    //    0.5f, -0.5f, 0.0f, // bottom right
+    //    -0.5f, 0.5f, 0.0f, // top left
+    //    // second triangle
+    //    0.5f, -0.5f, 0.0f, // bottom right
+    //    -0.5f, -0.5f, 0.0f, // bottom left
+    //    -0.5f, 0.5f, 0.0f // top left
+    //};
+    
+    // When drawing the above triangles, redundant/repeated vertices occur
+    // Element buffer objects take care of this ^
+    // Instead we can do this:
+    float vertices[] = {
+        0.5f, 0.5f, 0.0f, // top right
+        0.5f, -0.5f, 0.0f, // bottom right
+        -0.5f, -0.5f, 0.0f, // bottom left
+        -0.5f, 0.5f, 0.0f // top left
+    };
+    unsigned int indices[] = { // note that we start from 0!
+    0, 1, 3, // first triangle
+    1, 2, 3 // second triangle
     };
 
     // create vertex shader object
@@ -147,6 +173,14 @@ int main(int argc, char** argv) {
     (void*)0);
     glEnableVertexAttribArray(0);
 
+    // Create element buffer object
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+    // Bind EBO and copy indices into the buffer
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+        GL_STATIC_DRAW);
+
     // main render loop
     while (running) {
         SDL_PollEvent(&event);
@@ -168,7 +202,9 @@ int main(int argc, char** argv) {
         // The triangle we've all been waiting for
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
 
         SDL_GL_SwapWindow(window);
