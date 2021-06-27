@@ -4,7 +4,7 @@
 // OpenGL reference: https://learnopengl.com/book/book_pdf.pdf
 
 #include <iostream>
-// Follow this to install glad and sdl2: https://vcpkg.io/en/getting-started.html?platform=windows
+// Use vcpkg to install glad and sdl2 - see instructions here: https://vcpkg.io/en/getting-started.html?platform=windows
 // make sure to edit solution to link the installed files e.g. "C:\vcpkg\installed\x64-windows\include"
 #include <glad/glad.h>
 // https://stackoverflow.com/questions/48723523/lnk2019-unresolved-external-symbol-c-sdl2-library
@@ -100,7 +100,6 @@ int main(int argc, char** argv) {
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
-
     // Shader program - final linked version of multiple shaders combined
     unsigned int shaderProgram;
     shaderProgram = glCreateProgram();
@@ -108,12 +107,12 @@ int main(int argc, char** argv) {
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-
     // handle errors
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
     }
+
     // activate combined shader program - each shader and rendering call will now use this
     glUseProgram(shaderProgram);
     // can delete shader objects after they've been linked
@@ -135,10 +134,20 @@ int main(int argc, char** argv) {
         (void*)0);
     glEnableVertexAttribArray(0);
 
+    // Generate a Vertex Array Object (VAO) to store info on vertex attribute configs and buffer objects
+    unsigned int VAO;
+    glGenVertexArrays(1, &VAO);
+    // 1. bind Vertex Array Object
+    glBindVertexArray(VAO);
+    // 2. copy our vertices array in a buffer for OpenGL to use
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    // 3. then set our vertex attributes pointers
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+    (void*)0);
+    glEnableVertexAttribArray(0);
 
-    int testNum = 4;
-    int& testRef = testNum;
-
+    // main render loop
     while (running) {
         SDL_PollEvent(&event);
 
@@ -156,8 +165,11 @@ int main(int argc, char** argv) {
         }
 
         glClearColor(0, 0, 0, 1);
-        //std::cout << "testNum: " << testNum << std::endl;
-        //std::cout << "testRef: " << testRef << std::endl;
+        
+        // The triangle we've all been waiting for
+        glUseProgram(shaderProgram);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
 
         SDL_GL_SwapWindow(window);
