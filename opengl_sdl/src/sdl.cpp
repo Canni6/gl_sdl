@@ -165,7 +165,6 @@ int main(int argc, char** argv) {
         }
 
         glClearColor(0, 0, 0, 1);
-        
         // The triangle we've all been waiting for
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
