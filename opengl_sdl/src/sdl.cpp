@@ -2,7 +2,9 @@
 // g++ example/c++/sdl.cpp build/src/glad.c -Ibuild/include -lSDL2 -ldl
 
 // OpenGL reference: https://learnopengl.com/book/book_pdf.pdf
-
+// SDL: Simple DirectMedia Layer https://en.wikipedia.org/wiki/Simple_DirectMedia_Layer
+// GLAD: Multi-language graphics library https://github.com/Dav1dde/glad
+#include "../shader.h"
 #include <iostream>
 // Use vcpkg to install glad and sdl2 - see instructions here: https://vcpkg.io/en/getting-started.html?platform=windows
 // make sure to edit solution to link the installed files e.g. "C:\vcpkg\installed\x64-windows\include"
@@ -10,62 +12,6 @@
 // https://stackoverflow.com/questions/48723523/lnk2019-unresolved-external-symbol-c-sdl2-library
 #define SDL_MAIN_HANDLED 
 #include <SDL2/SDL.h>
-
-//// Compile a vertex shader
-//const char* vertexShaderSource = "#version 330 core\n"
-//"layout (location = 0) in vec3 aPos;\n"
-//"out vec4 vertexColor;\n" // specify a color output to fragment shader"
-//"void main()\n"
-//"{\n"
-//"gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-//"vertexColor = vec4(0.5, 0, 0.5, 1.0);\n"
-//"}\0";
-
-// Compile a vertex shader - this time with another attribute
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n" // position has attribute position 0
-"layout (location = 1) in vec3 aColor;\n" // color has attribute position 1
-
-"out vec3 ourColor;\n" // output a color to fragment shader"
-"void main()\n"
-"{\n"
-"gl_Position = vec4(aPos, 1.0);\n"
-"ourColor = aColor;\n"
-"}\0";
-
-
-//// Send data from vertex shader to fragment shader
-//
-//// Compile a fragment shader
-//const char* fragmentShaderSource = "#version 330 core\n"
-//"out vec4 FragColor;\n"
-//"in vec4 vertexColor;\n"
-//"void main()\n"
-//"{\n"
-//"FragColor = vertexColor;\n"
-//"}\0";
-
-// Send data from vertex shader to fragment shader
-
-//// Compile a fragment shader
-//const char* fragmentShaderSource = "#version 330 core\n"
-//"out vec4 FragColor;\n"
-//"in vec4 vertexColor;\n"
-//"void main()\n"
-//"{\n"
-//"FragColor = vertexColor;\n"
-//"}\0";
-
-// Compile a fragment shader
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"in vec3 ourColor;\n"
-"void main()\n"
-"{\n"
-"FragColor = vec4(ourColor, 1.0);\n"
-"}\0";
-
-
 
 int main(int argc, char** argv) {
 
@@ -76,7 +22,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    SDL_Window* window = SDL_CreateWindow("Glad Sample",
+    SDL_Window* window = SDL_CreateWindow("OpenGL GLAD SDL Window",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
         800, 600, SDL_WINDOW_SHOWN |
@@ -110,140 +56,34 @@ int main(int argc, char** argv) {
     // Loop condition
     bool running = true;
 
-    //// Triangle vertices (-1 to 1)
-    //float vertices[] = { 
-    //    -0.5f, -0.5f, 0.0f,
-    //     0.5f, -0.5f, 0.0f,
-    //     0.0f, 0.5f, 0.0f
-    //};
+    // build and compile our shader program
+    // ------------------------------------
+    Shader ourShader("hello_v_shader.vs", "hello_f_shader.fs");
 
-    // tri + tri = rect
-    //float vertices[] = {
-    //    // first triangle
-    //    0.5f, 0.5f, 0.0f, // top right
-    //    0.5f, -0.5f, 0.0f, // bottom right
-    //    -0.5f, 0.5f, 0.0f, // top left
-    //    // second triangle
-    //    0.5f, -0.5f, 0.0f, // bottom right
-    //    -0.5f, -0.5f, 0.0f, // bottom left
-    //    -0.5f, 0.5f, 0.0f // top left
-    //};
-    
-    // When drawing the above triangles, redundant/repeated vertices occur
-    // Element buffer objects take care of this ^
-    // Instead we can do this:
-    //float vertices[] = {
-    //    0.5f, 0.5f, 0.0f, // top right
-    //    0.5f, -0.5f, 0.0f, // bottom right
-    //    -0.5f, -0.5f, 0.0f, // bottom left
-    //    -0.5f, 0.5f, 0.0f // top left
-    //};
-
-    // Let's instead do position and colors
-    // R G B to each of the corners of the triangle
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    // ------------------------------------------------------------------
     float vertices[] = {
-        // positions            // colors
-        0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f, // bottom right
-       -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f, // bottom left
-        0.0f, 0.5f, 0.0f,   0.0f, 0.0f, 1.0f  // top
+        // positions         // colors
+         0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  // bottom left
+         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f   // top 
     };
 
-
-    //unsigned int indices[] = { // note that we start from 0!
-    //0, 1, 3 // first triangle
-    ////1, 2, 3 // second triangle
-    //};
-
-    // create vertex shader object
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    // attach vertex shader source code to shader object and compile shader
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    // handle errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" <<
-            infoLog << std::endl;
-    }
-    // fragment shader, similar to above
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // Shader program - final linked version of multiple shaders combined
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
-    // attach previously compiled shaders then link
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    // handle errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-    }
-
-    // activate combined shader program - each shader and rendering call will now use this
-    glUseProgram(shaderProgram);
-    // can delete shader objects after they've been linked
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    // First vertex buffer object
-    unsigned int VBO;
+    unsigned int VBO, VAO;
+    glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    glBindVertexArray(VAO);
 
-    // Buffer calls will configure the currently bound buffer - VBO in this case
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    // Copy vertex data into buffer memory
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    //// Instruct OpenGL how to interpret vertex data
-    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-    //    (void*)0);
-    //glEnableVertexAttribArray(0);
-
-    // Position attribute
-    // Instruct OpenGL how to interpret vertex data - setting stride to 6 this time
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-        (void*)0);
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
-    // Color attribute - setting location to 1
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-        (void*)(3 * sizeof(float))); // color attrib starts after position data so offset is 3 floats (12 bytes) - see pg. 49
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    //// Generate a Vertex Array Object (VAO) to store info on vertex attribute configs and buffer objects
-    //unsigned int VAO;
-    //glGenVertexArrays(1, &VAO);
-    //// 1. bind Vertex Array Object
-    //glBindVertexArray(VAO);
-    //// 2. copy our vertices array in a buffer for OpenGL to use
-    //glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    //// 3. then set our vertex attributes pointers
-    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-    //(void*)0);
-    
-
-    //// Create element buffer object
-    //unsigned int EBO;
-    //glGenBuffers(1, &EBO);
-    //// Bind EBO and copy indices into the buffer
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-    //    GL_STATIC_DRAW);
-
-    // Either fill (GL_FILL) or wireframe mode (GL_LINE)
-    /*glPolygonMode(GL_FRONT_AND_BACK,
-        GL_LINE);*/
-
 
     // main render loop
     while (running) {
@@ -262,15 +102,23 @@ int main(int argc, char** argv) {
             }
         }
 
-        //glClearColor(0, 0, 0, 1);
-        // The triangle we've all been waiting for
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        //glBindVertexArray(0);
+        // render
+        // ------
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
+        // render the triangle
+        ourShader.use();
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         SDL_GL_SwapWindow(window);
     }
+
+    // optional: de-allocate all resources once they've outlived their purpose:
+   // ------------------------------------------------------------------------
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
 
     // Destroy everything to not leak memory.
     SDL_GL_DeleteContext(gl_context);
