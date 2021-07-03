@@ -66,7 +66,10 @@ int main(int argc, char** argv) {
         // positions         // colors
          0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // bottom right
         -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  // bottom left
-         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f   // top 
+         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f,   // top 
+         -0.25f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  // mid left
+         0.25f,  0.0f, 0.0f,  0.0f, 1.0f, 0.0f,  // mid right
+         0.0f,  -0.5f, 0.0f, 0.0f, 0.0f, 1.0f   // bottom mid 
     };
 
     unsigned int VBO, VAO;
@@ -110,7 +113,7 @@ int main(int argc, char** argv) {
         // render the triangle
         ourShader.use();
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         SDL_GL_SwapWindow(window);
     }
