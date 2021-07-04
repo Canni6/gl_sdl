@@ -110,10 +110,17 @@ int main(int argc, char** argv) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // get and set offset variable - // 6.8 Exercise 2, pg 53
+        int vertexOffset = glGetUniformLocation(ourShader.ID, "offset");
+        //std::cout << "vertex offset retrieved: " << vertexOffset << std::endl;
+        float offset = 0.2f;
+        
         // render the triangle
         ourShader.use();
+        // set offset in currently active shader program
+        glUniform4f(vertexOffset, offset, offset*2, 0.0f, 1.0f);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, 6); // location 0 with 6 vertices
 
         SDL_GL_SwapWindow(window);
     }
